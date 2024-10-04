@@ -25,36 +25,28 @@ export default async (req, res) => {
     }
 
     // Validaciones básicas
-    if (!fields.cliente || !fields.obra || !fields.direccion || !fields.fecha) {
-      return res.status(400).json({ message: 'Faltan campos requeridos.' });
+    const requiredFields = ['cliente', 'obra', 'direccion', 'fecha', 'email'];
+    const missingFields = requiredFields.filter(field => !fields[field]);
+    if (missingFields.length > 0) {
+      return res.status(400).json({ message: `Faltan campos requeridos: ${missingFields.join(', ')}` });
     }
 
+    // Validar el formato del email del remitente
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(fields.email)) {
       return res.status(400).json({ message: 'Email inválido.' });
     }
 
-    if (files.attachments) {
-      // Verificar si hay más de 5 imágenes
-      const attachmentsArray = Array.isArray(files.attachments) ? files.attachments : [files.attachments];
-      if (attachmentsArray.length > 5) {
-        return res.status(400).json({ message: 'Puedes adjuntar hasta 5 imágenes.' });
-      }
-    }
-
-    // Configurar el transportador de Nodemailer
-    let transporter = nodemailer.createTransport({
-      service: 'Gmail',
-      auth: {
-        user: process.env.EMAIL_USER, // Tu correo electrónico
-        pass: process.env.EMAIL_PASS, // Contraseña de aplicación
-      },
-    });
-
-    // Preparar los adjuntos
+    // Limitar el número de imágenes adjuntas
     let attachments = [];
     if (files.attachments) {
       const attachmentsArray = Array.isArray(files.attachments) ? files.attachments : [files.attachments];
+
+      if (attachmentsArray.length > 5) {
+        return res.status(400).json({ message: 'Puedes adjuntar hasta 5 imágenes.' });
+      }
+
+      // Preparar los adjuntos
       attachments = attachmentsArray.map(file => ({
         filename: file.originalFilename,
         content: fs.readFileSync(file.filepath),
@@ -76,9 +68,18 @@ export default async (req, res) => {
       })
       .join('\n');
 
+    // Configurar el transportador de Nodemailer
+    let transporter = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: process.env.EMAIL_USER, // Tu correo electrónico de Gmail
+        pass: process.env.EMAIL_PASS, // Contraseña de aplicación de Gmail
+      },
+    });
+
     // Configurar el correo
     let mailOptions = {
-      from: fields.email, // Remitente
+      from: fields.email, // Remitente (correo del usuario)
       to: 'reneframirez@gmail.com', // Destinatario fijo
       subject: 'Nuevo Formulario de Inspección',
       text: `
@@ -95,7 +96,7 @@ export default async (req, res) => {
         Respuestas del Checklist:
         ${formattedChecklist}
       `,
-      attachments: attachments, // Incluir los adjuntos
+      attachments: attachments, // Incluye las imágenes adjuntas
     };
 
     try {

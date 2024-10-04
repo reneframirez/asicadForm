@@ -1,8 +1,28 @@
+// src/Formulario.js
+
 import React, { useState } from 'react';
-import { Button,TextField,Radio,RadioGroup,FormControl,FormControlLabel,FormLabel,Select,MenuItem,Accordion,AccordionSummary,AccordionDetails,Typography,Card,CardContent,CardHeader,Grid,IconButton,} from '@mui/material';
+import {
+  Button,
+  TextField,
+  Radio,
+  RadioGroup,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Select,
+  MenuItem,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+  Card,
+  CardContent,
+  CardHeader,
+  Grid,
+  IconButton,
+} from '@mui/material';
 import { ExpandMore, Close } from '@mui/icons-material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-
 
 const theme = createTheme({
   palette: {
@@ -81,7 +101,7 @@ const checklistSections = [
   }
 ];
 
-export default function Component() {
+export default function Formulario() {
   const [formData, setFormData] = useState({
     cliente: '',
     obra: '',
@@ -91,7 +111,8 @@ export default function Component() {
     administrador: '',
     profesionalTerreno: '',
     prevencion: '',
-    bodega: ''
+    bodega: '',
+    email: '', // Agregado campo email
   });
 
   const [checklistAnswers, setChecklistAnswers] = useState({});
@@ -114,6 +135,7 @@ export default function Component() {
 
   const handleImageUpload = (event) => {
     const files = Array.from(event.target.files);
+    // Validaciones de tipo y tamaño
     const validImages = files.filter(file => {
       const isValidType = ['image/jpeg', 'image/png', 'image/gif'].includes(file.type);
       const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
@@ -127,34 +149,29 @@ export default function Component() {
     });
     setImages(prevImages => [...prevImages, ...validImages]);
   };
-  
 
   const removeImage = (index) => {
     setImages(prevImages => prevImages.filter((_, i) => i !== index));
   };
 
-// Dentro de tu componente Formulario
-
-const handleSubmit = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-  
-    const formData = new FormData(event.target);
-  
+
+    const formDataToSend = new FormData(event.target);
+
     // Incluir las respuestas del checklist en los campos del formulario
     for (const key in checklistAnswers) {
-      formData.append(`checklistAnswers[${key}]`, checklistAnswers[key]);
+      formDataToSend.append(`checklistAnswers[${key}]`, checklistAnswers[key]);
     }
-  
-    // Incluir las imágenes ya están incluidas en formData a través de los inputs de archivos
-  
+
     try {
       const response = await fetch('/api/sendEmail', {
         method: 'POST',
-        body: formData,
+        body: formDataToSend,
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
         alert('Formulario enviado exitosamente');
         event.target.reset(); // Opcional: Resetear el formulario
@@ -168,11 +185,11 @@ const handleSubmit = async (event) => {
       alert('Ocurrió un error al enviar el formulario.');
     }
   };
-  
 
   return (
     <ThemeProvider theme={theme}>
       <form onSubmit={handleSubmit} style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+        {/* Formulario de Registro */}
         <Card elevation={3} style={{ marginBottom: '20px' }}>
           <CardHeader
             title="DESARROLLO INSPECCIÓN"
@@ -189,6 +206,7 @@ const handleSubmit = async (event) => {
                   name="cliente"
                   value={formData.cliente}
                   onChange={handleInputChange}
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -198,6 +216,7 @@ const handleSubmit = async (event) => {
                   name="obra"
                   value={formData.obra}
                   onChange={handleInputChange}
+                  required
                 />
               </Grid>
               <Grid item xs={12}>
@@ -207,6 +226,7 @@ const handleSubmit = async (event) => {
                   name="direccion"
                   value={formData.direccion}
                   onChange={handleInputChange}
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -218,10 +238,11 @@ const handleSubmit = async (event) => {
                   value={formData.fecha}
                   onChange={handleInputChange}
                   InputLabelProps={{ shrink: true }}
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
+                <FormControl fullWidth required>
                   <FormLabel>Sistema</FormLabel>
                   <Select
                     name="sistema"
@@ -241,6 +262,7 @@ const handleSubmit = async (event) => {
                   name="administrador"
                   value={formData.administrador}
                   onChange={handleInputChange}
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -250,6 +272,7 @@ const handleSubmit = async (event) => {
                   name="profesionalTerreno"
                   value={formData.profesionalTerreno}
                   onChange={handleInputChange}
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -259,6 +282,7 @@ const handleSubmit = async (event) => {
                   name="prevencion"
                   value={formData.prevencion}
                   onChange={handleInputChange}
+                  required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -268,12 +292,25 @@ const handleSubmit = async (event) => {
                   name="bodega"
                   value={formData.bodega}
                   onChange={handleInputChange}
+                  required
+                />
+              </Grid>
+              {/* Campo de Email */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
                 />
               </Grid>
             </Grid>
           </CardContent>
         </Card>
 
+        {/* Subir Imágenes */}
         <Card elevation={3} style={{ marginBottom: '20px' }}>
           <CardHeader title="Subir Imágenes" />
           <CardContent>
@@ -281,6 +318,7 @@ const handleSubmit = async (event) => {
               accept="image/*"
               style={{ display: 'none' }}
               id="raised-button-file"
+              name="attachments" // Nombre clave para adjuntos
               multiple
               type="file"
               onChange={handleImageUpload}
@@ -313,6 +351,7 @@ const handleSubmit = async (event) => {
           </CardContent>
         </Card>
 
+        {/* Checklist de Inspección */}
         <Card elevation={3} style={{ marginBottom: '20px' }}>
           <CardHeader title="Checklist de Inspección" />
           <CardContent>
@@ -327,6 +366,7 @@ const handleSubmit = async (event) => {
                       <FormLabel component="legend">{item}</FormLabel>
                       <RadioGroup
                         row
+                        name={`checklistAnswers[${sectionIndex}-${itemIndex}]`} // Añadir name
                         value={checklistAnswers[`${sectionIndex}-${itemIndex}`] || ''}
                         onChange={(e) => handleChecklistChange(sectionIndex, itemIndex, e.target.value)}
                       >
@@ -342,6 +382,7 @@ const handleSubmit = async (event) => {
           </CardContent>
         </Card>
 
+        {/* Botón de Envío */}
         <Button type="submit" variant="contained" color="primary" fullWidth>
           Enviar formulario
         </Button>

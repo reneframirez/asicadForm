@@ -114,18 +114,61 @@ export default function Component() {
 
   const handleImageUpload = (event) => {
     const files = Array.from(event.target.files);
-    setImages(prevImages => [...prevImages, ...files]);
+    const validImages = files.filter(file => {
+      const isValidType = ['image/jpeg', 'image/png', 'image/gif'].includes(file.type);
+      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+      if (!isValidType) {
+        alert(`El archivo ${file.name} no es una imagen válida.`);
+      }
+      if (!isValidSize) {
+        alert(`El archivo ${file.name} excede el tamaño máximo permitido (5MB).`);
+      }
+      return isValidType && isValidSize;
+    });
+    setImages(prevImages => [...prevImages, ...validImages]);
   };
+  
 
   const removeImage = (index) => {
     setImages(prevImages => prevImages.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (event) => {
+// Dentro de tu componente Formulario
+
+const handleSubmit = async (event) => {
     event.preventDefault();
-    console.log({ formData, checklistAnswers, images });
-    // Aquí puedes manejar el envío del formulario
+  
+    const formData = new FormData(event.target);
+  
+    // Incluir las respuestas del checklist en los campos del formulario
+    for (const key in checklistAnswers) {
+      formData.append(`checklistAnswers[${key}]`, checklistAnswers[key]);
+    }
+  
+    // Incluir las imágenes ya están incluidas en formData a través de los inputs de archivos
+  
+    try {
+      const response = await fetch('/api/sendEmail', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      const result = await response.json();
+  
+      if (response.ok) {
+        alert('Formulario enviado exitosamente');
+        event.target.reset(); // Opcional: Resetear el formulario
+        setImages([]); // Resetear las imágenes en el estado
+        setChecklistAnswers({}); // Resetear las respuestas del checklist
+      } else {
+        alert(`Error: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error al enviar el formulario:', error);
+      alert('Ocurrió un error al enviar el formulario.');
+    }
   };
+  
 
   return (
     <ThemeProvider theme={theme}>

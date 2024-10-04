@@ -7,8 +7,8 @@ function App() {
     <div className="App">
       <header className="App-header">
         {/* Puedes personalizar el header o dejarlo vacío */}
-        <h1>ASICAD</h1>
-        <h1>Inspección de Andamios</h1>
+        <h1>MANUMETAL</h1>
+        <h1>MANUFACTURAS METALICAS LTDA</h1>
       </header>
       <main>
         {/* Renderizamos el componente Formulario */}

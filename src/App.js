@@ -9,11 +9,9 @@ function App() {
         {/* Puedes personalizar el header o dejarlo vacío */}
         <h1>MANUMETAL</h1>
         <h3>Manufacturas Metálicas LTDA</h3>
-        
+        <h3>Desarrollo Inspección</h3>
+        </header>
 
-        <h1>DESARROLLO INSPECCIÓN</h1>
-        <h2>REGISTRO DE OBRA</h2>
-      </header>
       <main>
         {/* Renderizamos el componente Formulario */}
         <Formulario />

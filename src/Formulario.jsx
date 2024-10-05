@@ -317,21 +317,10 @@ export default function Formulario() {
       <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4, position: 'relative' }}>
         <Container maxWidth="md">
           <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
-
-            <Box sx={{ bgcolor: '#000051', color: 'white', p: 3, borderRadius: '8px 8px 0 0', mb: 3 }}>
-              <Typography variant="h4" align="center" gutterBottom sx={{ color: 'white' }}>
-                MANUMETAL
-              </Typography>
-              <Typography variant="h6" align="center" gutterBottom sx={{ color: 'white' }}>
-                MANUFACTURAS METALICAS LTDA
-              </Typography>
-              <Typography variant="h5" align="center" gutterBottom sx={{ color: 'white', mt: 2 }}>
-                DESARROLLO INSPECCIÓN
-              </Typography>
-              <Typography variant="h5" align="center" gutterBottom sx={{ color: '#c0c0c0', fontWeight: 'bold', fontSize: '1.8rem' }}>
-                REGISTRO DE OBRA
-              </Typography>
+            <Box sx={{ display: 'flex', fontSize: '2rem', fontWeight: 'bold', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
+              <h1>Registro de Obra</h1>
             </Box>
+
             <Divider sx={{ my: 3 }} />
             <form onSubmit={handleSubmit} ref={formRef}>
               <Grid container spacing={3}>

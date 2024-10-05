@@ -8,7 +8,11 @@ function App() {
       <header className="App-header">
         {/* Puedes personalizar el header o dejarlo vacío */}
         <h1>MANUMETAL</h1>
-        <h1>MANUFACTURAS METALICAS LTDA</h1>
+        <h3>Manufacturas Metálicas LTDA</h3>
+        
+
+        <h1>DESARROLLO INSPECCIÓN</h1>
+        <h2>REGISTRO DE OBRA</h2>
       </header>
       <main>
         {/* Renderizamos el componente Formulario */}

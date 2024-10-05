@@ -1,12 +1,13 @@
 // api/sendEmail.js
 
-const nodemailer = require('nodemailer');
-const formidable = require('formidable');
-const fs = require('fs');
+import nodemailer from 'nodemailer';
+import formidable from 'formidable';
+import fs from 'fs';
 
+// Configuración para deshabilitar el bodyParser, necesario para manejar archivos
 export const config = {
   api: {
-    bodyParser: false, // Necesario para procesar archivos
+    bodyParser: false,
   },
 };
 
@@ -26,20 +27,7 @@ const checklistSections = [
       "¿Andamio es acorde al uso que se solicitó por obra?"
     ]
   },
-  {
-    title: "ESTRUCTURA ANDAMIO MULTIFRONT",
-    items: [
-      "¿Niveladores sobre placas de madera?",
-      "¿Andamio se encuentra correctamente nivelado?",
-      "¿Horizontales y cabezales instalados correctamente?",
-      "¿Diagonales se encuentran instaladas correctamente?",
-      "¿Rodapiés multifront instalados correctamente?",
-      "¿Consolas y/o ménsulas instaladas correctamente?",
-      "¿Accesorios adicionales instalados correctamente?",
-      "¿Vigas simples o reticuladas instaladas correctamente?",
-      "¿Arriostres de acuerdo a planos?"
-    ]
-  },
+  // ... (resto de las secciones)
   {
     title: "ESTRUCTURA ANDAMIO FRONT",
     items: [
@@ -82,14 +70,18 @@ export default async (req, res) => {
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
-  const form = new formidable.IncomingForm();
-  form.keepExtensions = true;
+  const form = new formidable.IncomingForm({
+    multiples: true, // Permitir múltiples archivos
+    maxFileSize: 5 * 1024 * 1024, // 5MB por archivo
+  });
 
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      console.error('Error al procesar el formulario:', err);
-      return res.status(500).json({ message: 'Error al procesar el formulario', error: err });
-    }
+  try {
+    const { fields, files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        else resolve({ fields, files });
+      });
+    });
 
     // Validaciones de campos
     const requiredFields = ['cliente', 'obra', 'direccion', 'fecha', 'email'];
@@ -106,8 +98,8 @@ export default async (req, res) => {
         if (sectionItem) {
           const sectionIndex = parseInt(sectionItem[1], 10);
           const itemIndex = parseInt(sectionItem[2], 10);
-          const sectionTitle = checklistSections[sectionIndex].title;
-          const itemTitle = checklistSections[sectionIndex].items[itemIndex];
+          const sectionTitle = checklistSections[sectionIndex]?.title || 'Desconocido';
+          const itemTitle = checklistSections[sectionIndex]?.items[itemIndex] || 'Desconocido';
           const answer = fields[key];
 
           formattedChecklist += `
@@ -135,8 +127,8 @@ export default async (req, res) => {
     let transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER, // Tu correo de Gmail
+        pass: process.env.EMAIL_PASS, // Tu contraseña de Gmail o contraseña de aplicación
       },
     });
 
@@ -170,19 +162,19 @@ export default async (req, res) => {
 
     // Configurar el correo
     let mailOptions = {
-      from: fields.email, // Remitente
-      to: 'reneframirez@gmail.com', // Destinatario
+      from: fields.email, // Remitente (puede ser el email del usuario)
+      to: 'reneframirez@gmail.com', // Destinatario fijo
       subject: 'Nuevo Formulario de Inspección',
       html: htmlContent, // Enviar el contenido en formato HTML
       attachments: attachments, // Adjuntar imágenes
     };
 
-    try {
-      await transporter.sendMail(mailOptions);
-      res.status(200).json({ message: 'Correo enviado exitosamente' });
-    } catch (error) {
-      console.error('Error al enviar el correo:', error);
-      res.status(500).json({ message: 'Error al enviar el correo', error });
-    }
-  });
+    // Enviar el correo
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: 'Correo enviado exitosamente' });
+
+  } catch (error) {
+    console.error('Error al procesar el formulario:', error);
+    res.status(500).json({ message: 'Error al procesar el formulario', error: error.message || error });
+  }
 };

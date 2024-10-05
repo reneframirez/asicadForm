@@ -1,6 +1,6 @@
 // src/Formulario.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Button,
   TextField,
@@ -23,8 +23,9 @@ import {
   Container,
   Grid,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
-import { ExpandMore, Close, CloudUpload, Send, KeyboardArrowUp } from '@mui/icons-material';
+import { ExpandMore, Close, CloudUpload, Send, KeyboardArrowUp, Clear } from '@mui/icons-material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
@@ -188,14 +189,16 @@ export default function Formulario() {
     profesionalTerreno: '',
     prevencion: '',
     bodega: '',
-    email: '', // Agregado campo email
+    email: '',
   });
 
   const [checklistAnswers, setChecklistAnswers] = useState({});
   const [images, setImages] = useState([]);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [expandedSection, setExpandedSection] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Nuevo estado para manejo de carga
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const formRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -244,9 +247,9 @@ export default function Formulario() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setIsSubmitting(true); // Iniciar indicador de carga
+    setIsSubmitting(true);
 
-    const formDataToSend = new FormData(event.target);
+    const formDataToSend = new FormData(formRef.current);
 
     // Incluir las respuestas del checklist en los campos del formulario
     for (const key in checklistAnswers) {
@@ -263,9 +266,7 @@ export default function Formulario() {
 
       if (response.ok) {
         alert('Formulario enviado exitosamente');
-        event.target.reset(); // Resetear el formulario
-        setImages([]); // Resetear las imágenes en el estado
-        setChecklistAnswers({}); // Resetear las respuestas del checklist
+        handleClearForm();
       } else {
         alert(`Error: ${result.message}`);
       }
@@ -273,7 +274,27 @@ export default function Formulario() {
       console.error('Error al enviar el formulario:', error);
       alert('Ocurrió un error al enviar el formulario.');
     } finally {
-      setIsSubmitting(false); // Finalizar indicador de carga
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClearForm = () => {
+    setFormData({
+      cliente: '',
+      obra: '',
+      direccion: '',
+      fecha: '',
+      sistema: '',
+      administrador: '',
+      profesionalTerreno: '',
+      prevencion: '',
+      bodega: '',
+      email: '',
+    });
+    setChecklistAnswers({});
+    setImages([]);
+    if (formRef.current) {
+      formRef.current.reset();
     }
   };
 
@@ -288,14 +309,31 @@ export default function Formulario() {
     setExpandedSection(isExpanded ? panel : false);
   };
 
+  // Obtener la fecha máxima permitida (hoy)
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4, position: 'relative' }}>
         <Container maxWidth="md">
           <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
 
+            <Box sx={{ bgcolor: '#000051', color: 'white', p: 3, borderRadius: '8px 8px 0 0', mb: 3 }}>
+              <Typography variant="h4" align="center" gutterBottom sx={{ color: 'white' }}>
+                MANUMETAL
+              </Typography>
+              <Typography variant="h6" align="center" gutterBottom sx={{ color: 'white' }}>
+                MANUFACTURAS METALICAS LTDA
+              </Typography>
+              <Typography variant="h5" align="center" gutterBottom sx={{ color: 'white', mt: 2 }}>
+                DESARROLLO INSPECCIÓN
+              </Typography>
+              <Typography variant="h5" align="center" gutterBottom sx={{ color: '#c0c0c0', fontWeight: 'bold', fontSize: '1.8rem' }}>
+                REGISTRO DE OBRA
+              </Typography>
+            </Box>
             <Divider sx={{ my: 3 }} />
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} ref={formRef}>
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
                   <TextField
@@ -341,6 +379,9 @@ export default function Formulario() {
                     InputLabelProps={{ shrink: true }}
                     required
                     variant="outlined"
+                    inputProps={{
+                      max: today, // Restricción de fecha máxima
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -506,30 +547,49 @@ export default function Formulario() {
                 ))}
               </Box>
 
-              {/* Botón de Envío Dentro del Formulario */}
-              <Box sx={{ position: 'relative', mt: 4 }}>
-
-
-                {/* Floating Action Button Dentro del Formulario */}
-                <Fab
-                  variant="extended"
-                  color="primary"
-                  aria-label="Enviar formulario"
-                  sx={{
-                    position: 'fixed',
-                    bottom: 16,
-                    right: 16,
-                  }}
-                  type="submit" // Cambiar a tipo 'submit'
+              {/* Botones de Envío y Limpiar */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<Clear />}
+                  onClick={handleClearForm}
                   disabled={isSubmitting}
                 >
-                  <Send sx={{ mr: 1 }} />
+                  Limpiar Formulario
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  startIcon={isSubmitting ? <CircularProgress size={20} /> : <Send />}
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? 'Enviando...' : 'Enviar'}
-                </Fab>
+                </Button>
               </Box>
+
             </form>
           </Paper>
         </Container>
+
+        {/* Floating Action Button para Envío */}
+        <Zoom in={!isSubmitting}>
+          <Fab
+            variant="extended"
+            color="primary"
+            aria-label="Enviar formulario"
+            sx={{
+              position: 'fixed',
+              bottom: 16,
+              right: 16,
+            }}
+            onClick={() => formRef.current && formRef.current.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))}
+          >
+            <Send sx={{ mr: 1 }} />
+            Enviar
+          </Fab>
+        </Zoom>
 
         {/* Scroll to top button */}
         {showScrollTop && (
